@@ -26,6 +26,9 @@ SRC_URI = " \
 	file://0017-Support-for-vm_insert_pfn-deprecated-from-kernel-4.2.patch \
 	file://0018-Change-return-type-to-vm_fault_t-for-fault-handler.patch \
 	file://0019-get_monotonic_boottime-ts-deprecated-from-kernel-4.2.patch \
+	file://0020-gpu-mail-400-delete-obselete-API-ioremap.patch \
+	file://0021-gpu-mail-400-use-64-bit-timer-API.patch \
+	file://0022-gpu-mail-400-use-PTR_ERR_OR_ZERO-instead.patch \
 	"
 SRC_URI[md5sum] = "85ea110dd6675c70b7d01af87ec9633c"
 SRC_URI[sha256sum] = "7a67127341d17640c1fff5dad80258fb2a37c8a2121b81525fe2327e4532ce2b"
