@@ -7,3 +7,6 @@ DEPENDS_append_zynqmpeg = " ${DEPENDS_MALI_XLNX}"
 
 PACKAGE_ARCH_zynqmpev = "${PKG_ARCH_XLNX}"
 PACKAGE_ARCH_zynqmpeg = "${PKG_ARCH_XLNX}"
+
+FILESEXTRAPATHS_prepend := "${THISDIR}/mesa-demos:"
+SRC_URI_append_zynqmp = "file://0001-Revert-eglinfo-Add-EXT_platform_-awareness.patch"
