@@ -1,0 +1,78 @@
+From 11338d3e87474e7f37251d6d0cced446fea72ba9 Mon Sep 17 00:00:00 2001
+From: Quanyang Wang <quanyang.wang@windriver.com>
+Date: Wed, 14 Oct 2020 12:23:15 +0800
+Subject: [PATCH] gpu: mail-400: delete HAVE_UNLOCKED_IOCTL macro
+
+Due to mainline commit 4e24566a134e ("fs: remove the HAVE_UNLOCKED_IOCTL
+and HAVE_COMPAT_IOCTL defines"), we have no need to reserve HAVE_UNLOCKED_IOCTL
+in mali_kernel_linux.c.
+
+This patch is to fix compile error as below:
+
+| tmp-glibc/work/xilinx_zynqmp-wrs-linux/kernel-module-mali/r9p0-01rel0-r0/DX910-SW-99002-r9p0-01rel0/driver/src/devicedrv/mali/linux/mali_kernel_linux.c:279:3: error: 'struct file_operations' has no member named 'ioctl'
+|   279 |  .ioctl = mali_ioctl,
+|       |   ^~~~~
+
+Since the mainline commit 4e24566a134e which triggered this issue is introduced
+in V5.9 kernel. But xilinx is still using v5.4 kernel. So this patch is only for
+our CICD kernel.
+
+Upstream-Status: Inappropriate [WR Linux specific change]
+
+Signed-off-by: Quanyang Wang <quanyang.wang@windriver.com>
+---
+ .../devicedrv/mali/linux/mali_kernel_linux.c    | 17 -----------------
+ 1 file changed, 17 deletions(-)
+
+diff --git a/linux/mali_kernel_linux.c b/linux/mali_kernel_linux.c
+index 88dc349..26269b5 100644
+--- a/linux/mali_kernel_linux.c
++++ b/linux/mali_kernel_linux.c
+@@ -181,11 +181,7 @@ static void mali_miscdevice_unregister(void);
+ 
+ static int mali_open(struct inode *inode, struct file *filp);
+ static int mali_release(struct inode *inode, struct file *filp);
+-#ifdef HAVE_UNLOCKED_IOCTL
+ static long mali_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+-#else
+-static int mali_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg);
+-#endif
+ 
+ static int mali_probe(struct platform_device *pdev);
+ static int mali_remove(struct platform_device *pdev);
+@@ -273,11 +269,7 @@ struct file_operations mali_fops = {
+ 	.owner = THIS_MODULE,
+ 	.open = mali_open,
+ 	.release = mali_release,
+-#ifdef HAVE_UNLOCKED_IOCTL
+ 	.unlocked_ioctl = mali_ioctl,
+-#else
+-	.ioctl = mali_ioctl,
+-#endif
+ 	.compat_ioctl = mali_ioctl,
+ 	.mmap = mali_mmap
+ };
+@@ -971,20 +963,11 @@ int map_errcode(_mali_osk_errcode_t err)
+ 	}
+ }
+ 
+-#ifdef HAVE_UNLOCKED_IOCTL
+ static long mali_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
+-#else
+-static int mali_ioctl(struct inode *inode, struct file *filp, unsigned int cmd, unsigned long arg)
+-#endif
+ {
+ 	int err;
+ 	struct mali_session_data *session_data;
+ 
+-#ifndef HAVE_UNLOCKED_IOCTL
+-	/* inode not used */
+-	(void)inode;
+-#endif
+-
+ 	MALI_DEBUG_PRINT(7, ("Ioctl received 0x%08X 0x%08lX\n", cmd, arg));
+ 
+ 	session_data = (struct mali_session_data *)filp->private_data;
+-- 
+2.17.1
+
