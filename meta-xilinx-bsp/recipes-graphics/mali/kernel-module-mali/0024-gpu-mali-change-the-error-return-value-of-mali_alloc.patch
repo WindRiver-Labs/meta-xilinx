@@ -1,0 +1,64 @@
+From a649c4ad8bb203999bf25f7e3f1401ee862c899b Mon Sep 17 00:00:00 2001
+From: Quanyang Wang <quanyang.wang@windriver.com>
+Date: Tue, 28 Dec 2021 11:38:02 +0800
+Subject: [PATCH] gpu: mali: change the error return value of
+ mali_allocate_empty_page to MALI_INVALID_PAGE
+
+The function mali_allocate_empty_page returns physical address or zero
+which means failure. But the physical address could also be zero as the
+parameter "dma_addr_t *dma_handle" of dma_alloc_attrs. Under this
+scenario, a good DMA memory allocation is considered to be failure and
+this will result that the mali GPU driver can't be initialized
+successfully.
+
+Use MALI_INVALID_PAGE instead to be the failure return value can avoid
+this.
+
+Upstream-Status: Inappropriate [WR Linux specific change]
+
+Signed-off-by: Quanyang Wang <quanyang.wang@windriver.com>
+---
+ src/devicedrv/mali/common/mali_mmu.c                | 3 +--
+ src/devicedrv/mali/common/mali_mmu_page_directory.c | 4 ++--
+ 2 files changed, 3 insertions(+), 4 deletions(-)
+
+diff --git a/common/mali_mmu.c b/common/mali_mmu.c
+index 6e8ea32..846a6e0 100644
+--- a/common/mali_mmu.c
++++ b/common/mali_mmu.c
+@@ -61,9 +61,8 @@ _mali_osk_errcode_t mali_mmu_initialize(void)
+ {
+ 	/* allocate the helper pages */
+ 	mali_empty_page_directory_phys = mali_allocate_empty_page(&mali_empty_page_directory_virt);
+-	if (0 == mali_empty_page_directory_phys) {
++	if (MALI_INVALID_PAGE == mali_empty_page_directory_phys) {
+ 		MALI_DEBUG_PRINT_ERROR(("Mali MMU: Could not allocate empty page directory.\n"));
+-		mali_empty_page_directory_phys = MALI_INVALID_PAGE;
+ 		return _MALI_OSK_ERR_NOMEM;
+ 	}
+ 
+diff --git a/common/mali_mmu_page_directory.c b/common/mali_mmu_page_directory.c
+index 45d7f06..6d3d8cf 100644
+--- a/common/mali_mmu_page_directory.c
++++ b/common/mali_mmu_page_directory.c
+@@ -27,7 +27,7 @@ u32 mali_allocate_empty_page(mali_io_address *virt_addr)
+ 	if (_MALI_OSK_ERR_OK != mali_mmu_get_table_page(&address, &mapping)) {
+ 		/* Allocation failed */
+ 		MALI_DEBUG_PRINT(2, ("Mali MMU: Failed to get table page for empty pgdir\n"));
+-		return 0;
++		return MALI_INVALID_PAGE;
+ 	}
+ 
+ 	MALI_DEBUG_ASSERT_POINTER(mapping);
+@@ -36,7 +36,7 @@ u32 mali_allocate_empty_page(mali_io_address *virt_addr)
+ 	if (_MALI_OSK_ERR_OK != err) {
+ 		mali_mmu_release_table_page(address, mapping);
+ 		MALI_DEBUG_PRINT(2, ("Mali MMU: Failed to zero page\n"));
+-		return 0;
++		return MALI_INVALID_PAGE;
+ 	}
+ 
+ 	*virt_addr = mapping;
+-- 
+2.17.1
+
